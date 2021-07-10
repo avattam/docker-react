@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t avattam/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true avattam/react-test npm test
+
+after_success:
+  - docker build -t avattam/multi-client ./client
+  - docker build -t avattam/multi-nginx ./nginx
+  - docker build -t avattam/multi-server ./server
+  - docker build -t avattam/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push avattam/multi-client
+  - docker push avattam/multi-nginx
+  - docker push avattam/multi-server
+  - docker push avattam/multi-worker
